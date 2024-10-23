@@ -79,9 +79,74 @@ module.exports.deleteAlarm = async (req, res, next) => {
 
 module.exports.uploadAlarmSound = async (req, res, next) => {
     try {
-        const { userId } = req.body;
+        const { userId, alarmName, audioFilename } = req.body;
         const { alarmId } = req.params;
-        const audioFilename = req.file.filename;
+        console.log('req.body', req.body)
+
+
+
+
+        const existingAlarm = await Alarm.findOne({
+            where: { alarmName, userId }
+        });
+
+        if (!existingAlarm) {
+            const newAlarm = await Alarm.create({
+                alarmName,
+                userId,
+                audioFilename,
+            });
+        }
+
+        // Log the existing alarm details
+        console.log('Existing Alarm:', existingAlarm);
+
+        // Update the alarm with the new audio filename
+        await Alarm.update({ audioFilename, alarmName }, { where: { alarmName, userId } });
+
+        const alarms = await Alarm.findAll({ where: { userId } });
+
+        res.json({ alarms: alarms, message: 'File uploaded and alarm updated', audioFilename, userId, alarmId });
+    } catch (error) {
+        console.error('Error in uploadAlarmSound:', error); // Log error to server console
+        res.status(500).json({ message: 'Failed to upload file' });
+    }
+};
+
+
+
+
+module.exports.getAlarmsByUserId = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        const alarms = await Alarm.findAll({ where: { userId } });
+        res.json({ alarms });
+    } catch (error) {
+        console.error('Failed to get alarms:', error);
+        res.status(500).json({ error: 'Failed to get alarms' });
+    }
+};
+
+/*
+module.exports.uploadAlarmSound = async (req, res, next) => {
+    try {
+        const { userId, alarmName, audioFilename } = req.body;
+        const { alarmId } = req.params;
+
+
+        const existingAlarm = await Alarm.findOne({
+            where: { alarmName, userId }
+        });
+
+        if (!existingAlarm) {
+            const newAlarm = await Alarm.create({
+                alarmName: '',
+                userId,
+                audioFilename: '',
+            });
+        }
+
+
 
         // Log the incoming request details
         console.log(`UserID: ${userId}, AlarmID: ${alarmId}, AudioFilename: ${audioFilename}`);
@@ -126,18 +191,4 @@ module.exports.uploadAlarmSound = async (req, res, next) => {
         console.error('Error in uploadAlarmSound:', error); // Log error to server console
         res.status(500).json({ message: 'Failed to upload file' });
     }
-};
-
-
-
-
-module.exports.getAlarmsByUserId = async (req, res, next) => {
-    try {
-        const { userId } = req.params;
-        const alarms = await Alarm.findAll({ where: { userId } });
-        res.json({ alarms });
-    } catch (error) {
-        console.error('Failed to get alarms:', error);
-        res.status(500).json({ error: 'Failed to get alarms' });
-    }
-};
+};*/

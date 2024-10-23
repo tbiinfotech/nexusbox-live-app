@@ -107,7 +107,7 @@ router.post("/api/create-alarm", AlarmController.createAlarm);
 router.delete("/api/alarm/:alarmId", AlarmController.deleteAlarm);
 
 
-router.post('/api/upload/:alarmId', upload.single('audioFile'), AlarmController.uploadAlarmSound);
+router.post('/api/upload/:alarmId', AlarmController.uploadAlarmSound);
 router.get('/api/get-alarm/:userId', AlarmController.getAlarmsByUserId);
 
 module.exports = router;

@@ -633,6 +633,8 @@ td.platform_val .MuiFormControl-root input.MuiInputBase-input::placeholder {
   display: flex;
   align-items: center;
 }
+
+
 .issue_act_btns .actions .act_btn {
   background: #29AAE1;
   width: auto;
@@ -684,7 +686,9 @@ td.platform_val .MuiFormControl-root input.MuiInputBase-input::placeholder {
 }
 
 
-
+.issue_act_btns_select{
+  width: 250px;
+}
 
 
 

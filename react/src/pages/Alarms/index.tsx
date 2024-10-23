@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useSelector } from 'react-redux';
-import { Box, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
+import { Box, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, MenuItem, Select } from "@mui/material";
 import axios from "axios";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -15,6 +15,38 @@ export default function Alarms() {
   const userInfo = useSelector((state) => state.user.userInfo);
   const [selectedAlarmId, setSelectedAlarmId] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
+  const [websiteDown, setWebsiteDown] = useState('');
+  const [beingAttacked, setBeingAttacked] = useState('');
+  const [holiday, setHoliday] = useState('');
+  const [others, setOthers] = useState('');
+
+
+  const [civildefense, setCivildefense] = useState('emergencyalarm');
+
+
+  const alarmIssue = [
+    {
+      alarmName: 'websiteDown',
+      emergencyType: 'Website Down',
+      audioFile: websiteDown, // Reference the state
+    },
+    {
+      alarmName: 'beingAttacked',
+      emergencyType: 'Being attacked',
+      audioFile: beingAttacked, // Reference the state
+    },
+    {
+      alarmName: 'holiday',
+      emergencyType: 'It’s holiday and I broke something',
+      audioFile: holiday, // Reference the state
+    },
+    {
+      alarmName: 'others',
+      emergencyType: 'Others',
+      audioFile: others, // Reference the state
+    },
+
+  ];
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,12 +56,42 @@ export default function Alarms() {
     setSelectedAlarmId(id);
   };
 
+  const handleOptionChange = (event, alarmName) => {
+    const value = event.target.value;
+
+    switch (alarmName) {
+      case 'websiteDown':
+        setWebsiteDown(value);
+        break;
+      case 'beingAttacked':
+        setBeingAttacked(value);
+        break;
+      case 'holiday':
+        setHoliday(value);
+        break;
+      case 'others':
+        setOthers(value);
+        break;
+      default:
+        break;
+    }
+
+    handleUpload(alarmName, value); // Adjusting to pass the correct alarmName instead of "Website Down"
+  };
+
+
   useEffect(() => {
     const fetchAlarmDetails = async () => {
       try {
         const response = await axios.get(`${API_URL}/get-alarm/${userInfo.id}`);
         const alarms = response.data.alarms;
         console.log("alarms", alarms);
+
+        setWebsiteDown(alarms[0]?.audioFilename ? alarms[0]?.audioFilename : 'emergencyalarm.mp3')
+        setBeingAttacked(alarms[1]?.audioFilename ? alarms[1]?.audioFilename : 'emergencyalarm.mp3')
+        setHoliday(alarms[2]?.audioFilename ? alarms[2]?.audioFilename : 'emergencyalarm.mp3')
+        setOthers(alarms[3]?.audioFilename ? alarms[3]?.audioFilename : 'emergencyalarm.mp3')
+
         if (alarms) {
           // const url = process.env.VITE_API_URL;
           // const fileUrl = url?.split('api')
@@ -106,21 +168,26 @@ export default function Alarms() {
     fileInputRefs.current[issue].click();
   };
 
-  const handleUpload = async (alarmId, file) => {
-    console.log('handleUpload called', alarmId);
-    if (alarmId && userInfo.id) {
-      const formData = new FormData();
-      formData.append('audioFile', file); // Use the file directly
-      formData.append('alarmId', alarmId);
-      formData.append('userId', userInfo.id); // Add userId to formData
+  const handleUpload = async (alarmName, alarmType) => {
+    console.log('handleUpload called', alarmName, alarmType);
+
+
+    if (true) {
+      const alarmDetails = {
+        audioFilename: alarmType,
+        alarmName: alarmName,
+        userId: userInfo.id,
+      };
 
       try {
-        const alarmDetailsResponse = await axios.post(`https://emergency.nexusbox.io/api/upload/${alarmId}`, formData, {
+        const alarmDetailsResponse = await axios.post(`https://emergency.nexusbox.io/api/upload/${userInfo.id}`, alarmDetails, {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': 'application/json',  // Changed to JSON content type
           },
         });
-        toast.success('File uploaded successfully!');
+        toast.success('Alarm changed successfully!');
+
+        console.log('alarmDetailsResponse', alarmDetailsResponse);
 
         setAlarmDetails(alarmDetailsResponse.data.alarms);
 
@@ -280,66 +347,43 @@ export default function Alarms() {
             </Box>
           </Box>
           <Box className="issue_types">
-            {currentAlarms.length > 0 && currentAlarms.map((alarm) => (
-              <Box className="single_issue" key={alarm.id} onClick={() => handleAlarmSelect(alarm.id)}>
+
+            {alarmIssue.map((alarm, index) => (
+              <Box className="single_issue" key={index}>
                 <Box className="issue_heading">
                   <Typography component="h3" variant="h3">
-                    {alarm.alarmName || 'Alarm Issue'}
+                    {'Emergency'}
                   </Typography>
                 </Box>
                 <Box className="issue_actions">
                   <Box className="label">
                     <Typography component="h4" variant="h4">
-                      {alarm?.toneName}
+                      {alarm.emergencyType}
                     </Typography>
                   </Box>
                   <Box className="issue_act_btns">
-                    <Box className="actions left">
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        onChange={(event) => handleFileChange(event, alarm.id)}
-                        style={{ display: "none" }}
-                        ref={ref => fileInputRefs.current[alarm.id] = ref}
-                      />
-                      {issueData[alarm.id]?.showPreviewButton && (
-                        <Button
-                          className="act_btn white_bg"
-                          onClick={() => handlePreview(alarm.id)}
-                          disabled={!issueData[alarm.id]?.previewUrl}
-                        >
-                          Preview
-                        </Button>
-                      )}
-                      {!issueData[alarm.id]?.preview && (
-                        <Button
-                          className="act_btn outlined"
-                          onClick={() => fileInputRefs.current[alarm.id]?.click()}
-                        >
-                          Upload
-                        </Button>
-                      )}
+                    <Select
+                    className="issue_act_btns_select"
+                      labelId={`action-label-${index}`}
+                      value={alarm.audioFile} // Set the value of the Select to the current audio file for the alarm
+                      onChange={(e) => handleOptionChange(e, alarm.alarmName)} // Handle option change with the correct alarm name
+                      label="Actions"
+                    >
+                      <MenuItem value="emergencyalarm.mp3">Emergency Alarm</MenuItem>
+                      <MenuItem value="civildefense.mp3">Civil Defense</MenuItem>
+                      <MenuItem value="emergencyreverb.mp3">Emergency Reverb</MenuItem>
+                      <MenuItem value="firealarm.mp3">Fire Alarm</MenuItem>
+                      <MenuItem value="thepurgesiren.mp3">The Purge Siren</MenuItem>
+                    </Select>
+                    <Box className="actions right"></Box>
+                    <Box>
+                      <audio controls src={`/sounds/${alarm.audioFile}`} />
                     </Box>
-                    {!issueData[alarm.id]?.preview && (
-                      <Box className="actions right">
-                        <Button
-                          className="act_btn with_bg"
-                          onClick={() => handleDeleteAlarm(alarm.id)} // Trigger upload for the specific alarm
-                        // disabled={!issueData[alarm.id]?.audioFile} // Disable if no file is selected
-                        >
-                          Delete
-                        </Button>
-                      </Box>
-                    )}
-                    {issueData[alarm.id]?.preview && issueData[alarm.id]?.previewUrl && (
-                      <Box>
-                        <audio controls src={issueData[alarm.id].previewUrl} />
-                      </Box>
-                    )}
                   </Box>
                 </Box>
               </Box>
             ))}
+
           </Box>
         </Box>
       </Box>
