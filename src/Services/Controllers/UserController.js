@@ -43,7 +43,8 @@ admin.initializeApp({
   projectId: 'nexusappbuild',
 });
 
-const sendNotification = async (fcmToken, title, body, taskId, createdAt) => {
+const sendNotification = async (fcmToken, title, body, taskId, createdAt, audioFile) => {
+  console.log('audioFile', audioFile)
   const message = {
     notification: {
       title: title,
@@ -63,7 +64,7 @@ const sendNotification = async (fcmToken, title, body, taskId, createdAt) => {
           },
           sound: {
             critical: 1,
-            name: 'tone2.wav',
+            name: audioFile,
             volume: 1.0,
           },
         },
@@ -381,6 +382,16 @@ module.exports.userLogoutStatus = async (req, res, next) => {
   }
 };
 
+function changeExtensionToWav(filename) {
+  // Check if the filename ends with .mp3
+  if (filename.endsWith('.mp3')) {
+    // Replace the .mp3 extension with .wav
+    return filename.replace('.mp3', '.wav');
+  }
+  // If not, return the original filename
+  return filename;
+}
+
 module.exports.createClientAlert = async (req, res) => {
   try {
     const {
@@ -390,8 +401,13 @@ module.exports.createClientAlert = async (req, res) => {
       developerId,
       projectManagerId,
       serverId,
-      soundName
+      typeOfEmergency
     } = req.body;
+
+
+    const types = ['', 'websiteDown', 'beingAttacked', 'holiday', 'others']
+
+    console.log('types[typeOfEmergency]', types[typeOfEmergency])
 
 
     console.log('###req.body@', req.body)
@@ -401,7 +417,7 @@ module.exports.createClientAlert = async (req, res) => {
     // return res.status(201).json({ task: "test", soundName: allAlarm });
     const alarms = await Alarm.findAll({
       where: {
-        toneName: soundName, // Use the toneName to filter the results
+        alarmName: types[typeOfEmergency], // Use the toneName to filter the results
       },
     });
 
@@ -409,10 +425,10 @@ module.exports.createClientAlert = async (req, res) => {
 
     // Check if alarms were found
     if (alarms.length === 0) {
-      console.log(`No alarms found with toneName: ${soundName}`);
+      console.log(`No alarms found with toneName: ${types[typeOfEmergency]}`);
       return res
         .status(400)
-        .json({ message: `No alarms found with tone Name: ${soundName}` });
+        .json({ message: `No alarms found with tone Name: ${types[typeOfEmergency]}` });
     }
 
 
@@ -460,6 +476,8 @@ module.exports.createClientAlert = async (req, res) => {
     const io = req.app.get('socketio');
     const taskId = task.id;
     const createdAt = new Date(task.createdAt);
+    const audioFile = changeExtensionToWav(alarms[0].audioFilename)
+
 
     for (const developerID of developerIDs) {
       console.log('####developerID:', developerID);
@@ -485,7 +503,8 @@ module.exports.createClientAlert = async (req, res) => {
               'New Task Alert',
               `A new task has been created: ${description}`,
               taskId,
-              createdAt
+              createdAt,
+              audioFile,
             );
           } catch (notificationError) {
             console.error('Error sending notification:', notificationError);
@@ -495,8 +514,8 @@ module.exports.createClientAlert = async (req, res) => {
     }
 
     const emergencySoundDetails = {
-      originalName: alarms[0].audioFilename,
-      soundName: alarms[0].toneName,
+      originalName: audioFile,
+      emergencyType: alarms[0].alarmName,
     }
 
     res.status(201).json({ task, emergencySoundDetails });

@@ -296,12 +296,12 @@ export default function Alarms() {
             </Typography>
           </Box>
           <Box className="head_butn">
-            <Button
+            {/* <Button
               className="common_buttn-desgn"
               onClick={handleCreateAlarm}
             >
               New Alarm
-            </Button>
+            </Button> */}
           </Box>
         </Box>
       </Box>
@@ -331,20 +331,20 @@ export default function Alarms() {
             <Typography variant="h2" component="h2">
               Alarm Settings
             </Typography>
-            <Box className="navigation">
-              <Button className="navig_buttn" onClick={() => handlePageChange('prev')} disabled={currentPage === 1}>
-                <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13.75 21.25L7.5 15L13.75 8.75" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M22.5 21.25L16.25 15L22.5 8.75" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Button>
-              <Button className="navig_buttn" onClick={() => handlePageChange('next')} disabled={currentPage === Math.ceil(alarmDetails.length / alarmsPerPage)}>
-                <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M16.25 21.25L22.5 15L16.25 8.75" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M7.5 21.25L13.75 15L7.5 8.75" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Button>
-            </Box>
+              {/* <Box className="navigation">
+                <Button className="navig_buttn" onClick={() => handlePageChange('prev')} disabled={currentPage === 1}>
+                  <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13.75 21.25L7.5 15L13.75 8.75" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M22.5 21.25L16.25 15L22.5 8.75" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Button>
+                <Button className="navig_buttn" onClick={() => handlePageChange('next')} disabled={currentPage === Math.ceil(alarmDetails.length / alarmsPerPage)}>
+                  <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16.25 21.25L22.5 15L16.25 8.75" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M7.5 21.25L13.75 15L7.5 8.75" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Button>
+              </Box> */}
           </Box>
           <Box className="issue_types">
 
@@ -352,7 +352,7 @@ export default function Alarms() {
               <Box className="single_issue" key={index}>
                 <Box className="issue_heading">
                   <Typography component="h3" variant="h3">
-                    {'Emergency'}
+                    {'Emergency Type'}
                   </Typography>
                 </Box>
                 <Box className="issue_actions">
