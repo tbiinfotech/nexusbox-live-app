@@ -44,7 +44,7 @@ admin.initializeApp({
 });
 
 const sendNotification = async (fcmToken, title, body, taskId, createdAt, audioFile) => {
-  console.log('audioFile', audioFile)
+  console.log('audioFile', audioFile.replace('.wav', ''))
   const message = {
     notification: {
       title: title,
@@ -53,6 +53,15 @@ const sendNotification = async (fcmToken, title, body, taskId, createdAt, audioF
     data: {
       taskId: taskId.toString(),
       createdAt: createdAt.toISOString(), // Ensure createdAt is converted to an ISO string
+    },
+    android: {
+      priority: "high",
+      notification: {
+        title: title,
+        body: body,
+        sound: audioFile.replace('.wav', ''), // Use 'default' if no audioFile provided
+        autoCancel: false,
+      },
     },
     apns: {
       payload: {
