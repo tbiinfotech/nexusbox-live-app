@@ -60,7 +60,6 @@ const sendNotification = async (fcmToken, title, body, taskId, createdAt, audioF
         title: title,
         body: body,
         sound: audioFile.replace('.wav', ''), // Use 'default' if no audioFile provided
-        autoCancel: false,
       },
     },
     apns: {
@@ -456,7 +455,7 @@ module.exports.createClientAlert = async (req, res) => {
         userId: clientId,
       },
     });
-
+    ``
     if (!developerAssignment) {
       console.error('No developer assignment found for client ID', clientId);
       return res.status(404).json({ message: 'No developer assignment found' });
@@ -471,6 +470,7 @@ module.exports.createClientAlert = async (req, res) => {
     // console.log('task', task);
     let developerIDs = [];
 
+
     if (
       developerAssignment?.developers &&
       typeof developerAssignment.developers === 'string'
@@ -479,6 +479,29 @@ module.exports.createClientAlert = async (req, res) => {
     } else {
       developerIDs = developerAssignment.developers;
     }
+
+
+    console.log('developerAssignment.projectManagerId', developerAssignment.projectManagerId)
+    console.log('typeof developerAssignment.projectManagerId', typeof developerAssignment.projectManagerId)
+    console.log('developerAssignment.serverStaffId', developerAssignment.serverStaffId)
+    console.log('typeof developerAssignment.serverStaffId', typeof developerAssignment.serverStaffId)
+
+    console.log('developerIDs', developerIDs)
+    developerIDs.push(developerAssignment.projectManagerId)
+    developerIDs.push(developerAssignment.serverStaffId)
+    console.log('developerIDs after push', developerIDs)
+
+
+
+
+    // if (
+    //   developerAssignment?.projectManagerId &&
+    //   typeof developerAssignment.projectManagerId === 'string'
+    // ) {
+    //   developerIDs.push(JSON.parse(developerAssignment.projectManagerId))
+    // } else {
+    //   developerIDs = developerAssignment.developers;
+    // }
 
     console.log('developers :- ', typeof developerIDs);
 
@@ -536,7 +559,7 @@ module.exports.createClientAlert = async (req, res) => {
 
 module.exports.updateClientAlert = async (req, res) => {
   try {
-    const { taskid, developerId, timetaken } = req.body;
+    const { taskid, developerId, timetaken, role } = req.body;
 
     // console.log(' req.body;+++', req.body);
     if (!taskid || !developerId) {
@@ -545,8 +568,28 @@ module.exports.updateClientAlert = async (req, res) => {
         .json({ message: 'taskid and developerId are required' });
     }
 
+    let columnName;
+
+    switch (role) {
+      case 'client':
+        columnName = 'clientId'
+        break;
+      case 'developer':
+        columnName = 'developerId'
+        break;
+      case 'projectmanager':
+        columnName = 'projectManagerId'
+        break;
+      case 'server':
+        columnName = 'serverId'
+        break;
+      default:
+        break;
+    }
+
+
     const task = await Task.update(
-      { status: 'pickup', developerId: developerId, timetaken: timetaken },
+      { status: 'pickup', [columnName]: developerId, timetaken: timetaken },
       { where: { id: taskid } }
     );
 
@@ -699,6 +742,122 @@ module.exports.getIdBasedAlerts = async (req, res) => {
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
 
+      return res.status(200).json({ success: true, tasks: sortedTasks });
+    } else if (Username === 'projectmanager') {
+      // Fetching assignments for the project manager
+      const projectManagerAssignments = await DeveloperAssignment.findAll({
+        where: {
+          projectManagerId: id
+        },
+        attributes: ['userId'],
+      });
+
+      // Extract userIds from projectManagerAssignments
+      const userIds = projectManagerAssignments.map(
+        (assignment) => assignment.userId
+      );
+      console.log('userIds', userIds);
+
+      // Fetch tasks for each user ID
+      const tasksPromises = userIds.map((userId) => {
+        return Task.findAll({
+          where: { clientId: userId }, // Assuming clientId is the same as userId
+          include: [
+            {
+              model: User,
+              as: 'Client',
+              attributes: { exclude: ['password'] },
+            },
+            {
+              model: User,
+              as: 'Developer',
+              attributes: { exclude: ['password'] },
+            },
+            {
+              model: User,
+              as: 'ProjectManager',
+              attributes: { exclude: ['password'] },
+            },
+            {
+              model: User,
+              as: 'Server',
+              attributes: { exclude: ['password'] },
+            },
+          ],
+          order: [['createdAt', 'DESC']],
+        });
+      });
+
+      // Wait for all task promises to resolve
+      let allTasksArrays = await Promise.all(tasksPromises);
+
+      // Flatten the array of arrays into a single array
+      const allTasks = allTasksArrays.flat();
+
+      // Sort tasks by `createdAt` in descending order
+      const sortedTasks = allTasks.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      // Return the sorted tasks in the response
+      return res.status(200).json({ success: true, tasks: sortedTasks });
+    } else if (Username === 'server') {
+      // Fetching assignments for the server staff
+      const serverStaffAssignments = await DeveloperAssignment.findAll({
+        where: {
+          serverStaffId: id
+        },
+        attributes: ['userId'],
+      });
+
+      // Extract userIds from serverStaffAssignments
+      const userIds = serverStaffAssignments.map(
+        (assignment) => assignment.userId
+      );
+      console.log('userIds', userIds);
+
+      // Fetch tasks for each user ID
+      const tasksPromises = userIds.map((userId) => {
+        return Task.findAll({
+          where: { clientId: userId }, // Assuming clientId is the same as userId
+          include: [
+            {
+              model: User,
+              as: 'Client',
+              attributes: { exclude: ['password'] },
+            },
+            {
+              model: User,
+              as: 'Developer',
+              attributes: { exclude: ['password'] },
+            },
+            {
+              model: User,
+              as: 'ProjectManager',
+              attributes: { exclude: ['password'] },
+            },
+            {
+              model: User,
+              as: 'Server',
+              attributes: { exclude: ['password'] },
+            },
+          ],
+          order: [['createdAt', 'DESC']],
+        });
+      });
+
+      // Wait for all task promises to resolve
+      let allTasksArrays = await Promise.all(tasksPromises);
+
+      // Flatten the array of arrays into a single array
+      const allTasks = allTasksArrays.flat();
+
+      // Sort tasks by `createdAt` in descending order
+      const sortedTasks = allTasks.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      // Return the sorted tasks in the response
       return res.status(200).json({ success: true, tasks: sortedTasks });
     }
   } catch (error) {
